@@ -1,0 +1,4 @@
+# 일반 Gateway(8000)와 다른 포트(8001)를 사용하며 AWS 자격증명 없이 실행합니다.
+logging:
+  level:
+    com.msa.purchasegateway: INFO

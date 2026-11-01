@@ -1,0 +1,4 @@
+# 통합 테스트는 고정된 로컬 fixture를 사용하며 외부 레지스트리에 연결하지 않습니다.
+eureka:
+  client:
+    enabled: false
