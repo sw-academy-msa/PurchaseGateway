@@ -43,7 +43,14 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/v1/products/*/inquiries").hasRole("BUYER")
                         .pathMatchers("/api/v1/seller/products", "/api/v1/seller/products/**").hasRole("SELLER")
                         .pathMatchers("/api/v1/admin/product-reviews", "/api/v1/admin/product-reviews/**").hasRole("ADMIN")
-                        // 로그인·결제·Query 및 아직 구현하지 않은 Order 경로는 노출하지 않습니다.
+                        // Order 역할과 실제 HTTP 메서드를 제한합니다. 소유권은 Order에서도 재검증합니다.
+                        .pathMatchers(HttpMethod.POST, "/api/v1/orders", "/api/v1/orders/*/payment-attempts", "/api/v1/orders/*/inquiries", "/api/v1/orders/*/inquiries/*/messages", "/api/v1/orders/*/inquiry-images", "/api/v1/orders/*/inquiry-images/*/completion").hasRole("BUYER")
+                        .pathMatchers(HttpMethod.GET, "/api/v1/orders/*/checkout", "/api/v1/orders/*/inquiries/*/editing", "/api/v1/orders/*/inquiry-images/*/download").hasRole("BUYER")
+                        .pathMatchers(HttpMethod.PATCH, "/api/v1/orders/*/shipping-address").hasRole("BUYER")
+                        .pathMatchers(HttpMethod.DELETE, "/api/v1/orders/*/inquiry-images/*").hasRole("BUYER")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/seller/orders/*/shipment", "/api/v1/seller/orders/*/delivery-completion", "/api/v1/seller/orders/*/inquiries/*/answers").hasRole("SELLER")
+                        .pathMatchers(HttpMethod.GET, "/api/v1/seller/orders/*/fulfillment", "/api/v1/seller/orders/*/inquiries/*/editing", "/api/v1/seller/orders/*/inquiry-images/*/download").hasRole("SELLER")
+                        // 나머지 일반 서비스와 Query 경로는 공개하지 않습니다.
                         .anyExchange().denyAll())
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(new ReactiveJwtAuthenticationConverterAdapter(converter)))
