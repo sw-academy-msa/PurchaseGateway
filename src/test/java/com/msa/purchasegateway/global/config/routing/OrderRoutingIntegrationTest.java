@@ -57,12 +57,16 @@ class OrderRoutingIntegrationTest {
     @Test
     void buyerMutationsAndCommandReadsAreRoutedButQueryIsClosed() throws Exception {
         String token = token("BUYER");
+        String seller = token("SELLER");
+        // BUYER 전용 경로는 성공 응답과 함께 SELLER 단독 역할의 접근 거절도 확인합니다.
         for (String path : List.of("/api/v1/orders", "/api/v1/orders/order-1/payment-attempts", "/api/v1/orders/order-1/inquiries",
                 "/api/v1/orders/order-1/inquiries/inquiry-1/messages", "/api/v1/orders/order-1/inquiry-images",
-                "/api/v1/orders/order-1/inquiry-images/image-1/completion")) { proxy(HttpMethod.POST, path, token); }
-        for (String path : List.of("/api/v1/orders/order-1/checkout", "/api/v1/orders/order-1/inquiries/inquiry-1/editing", "/api/v1/orders/order-1/inquiry-images/image-1/download")) { proxy(HttpMethod.GET, path, token); }
+                "/api/v1/orders/order-1/inquiry-images/image-1/completion")) { proxy(HttpMethod.POST, path, token); forbidden(HttpMethod.POST, path, seller); }
+        for (String path : List.of("/api/v1/orders/order-1/checkout", "/api/v1/orders/order-1/inquiries/inquiry-1/editing", "/api/v1/orders/order-1/inquiry-images/image-1/download")) { proxy(HttpMethod.GET, path, token); forbidden(HttpMethod.GET, path, seller); }
         proxy(HttpMethod.PATCH, "/api/v1/orders/order-1/shipping-address", token);
+        forbidden(HttpMethod.PATCH, "/api/v1/orders/order-1/shipping-address", seller);
         proxy(HttpMethod.DELETE, "/api/v1/orders/order-1/inquiry-images/image-1", token);
+        forbidden(HttpMethod.DELETE, "/api/v1/orders/order-1/inquiry-images/image-1", seller);
         for (String path : List.of("/api/v1/orders", "/api/v1/orders/order-1", "/api/v1/products", "/internal/v1/stock-reservations")) {
             client.get().uri(path).headers(h -> h.setBearerAuth(token)).exchange().expectStatus().isForbidden();
         }
@@ -75,9 +79,14 @@ class OrderRoutingIntegrationTest {
             proxy(HttpMethod.POST, path, seller);
             client.post().uri(path).headers(h -> h.setBearerAuth(buyer)).exchange().expectStatus().isForbidden();
         }
-        proxy(HttpMethod.GET, "/api/v1/seller/orders/order-1/fulfillment", seller);
-        proxy(HttpMethod.GET, "/api/v1/seller/orders/order-1/inquiries/inquiry-1/editing", seller);
-        proxy(HttpMethod.GET, "/api/v1/seller/orders/order-1/inquiry-images/image-1/download", seller);
+        // 판매자 업무용 GET도 BUYER 단독 역할로 접근하면 Order에 전달되지 않아야 합니다.
+        for (String path : List.of(
+                "/api/v1/seller/orders/order-1/fulfillment",
+                "/api/v1/seller/orders/order-1/inquiries/inquiry-1/editing",
+                "/api/v1/seller/orders/order-1/inquiry-images/image-1/download")) {
+            proxy(HttpMethod.GET, path, seller);
+            forbidden(HttpMethod.GET, path, buyer);
+        }
     }
     @Test
     void anonymousAndWrongMethodDoNotCallOrder() throws Exception {
@@ -86,6 +95,18 @@ class OrderRoutingIntegrationTest {
         client.delete().uri("/api/v1/orders/order-1/checkout").headers(h -> h.setBearerAuth(tokenUnchecked())).exchange().expectStatus().isForbidden();
         Assertions.assertEquals(before, CALLS.get());
     }
+    /** 역할 거절은 403뿐 아니라 실제 Order 호출이 없다는 것까지 검증합니다. */
+    private void forbidden(HttpMethod method, String path, String token) {
+        int before = CALLS.get();
+        client.method(method)
+                .uri(path)
+                .headers(h -> h.setBearerAuth(token))
+                .exchange()
+                .expectStatus()
+                .isForbidden();
+        Assertions.assertEquals(before, CALLS.get());
+    }
+
     private void proxy(HttpMethod method, String path, String token) {
         client.method(method).uri(path).headers(h -> h.setBearerAuth(token)).header("Origin", "http://localhost:5173")
                 .header("Cookie", "fixture=ignored").header("X-User-Id", "forged")
