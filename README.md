@@ -47,3 +47,6 @@ Git add/commit/push와 실제 배포는 사용자가 별도로 수행합니다.
 - Gateway는 어느 DB에도 접속하지 않으며 내부 HTTP·Eureka 탐색만 수행합니다.
 - DB 분리는 일반 RDS에 대한 직접적인 자원 경합을 줄이지만 Order/Product 상호 영향과 공유 Payment/ALB/Kafka 영향은 남습니다.
 - 실제 ALB 분기, 동시 요청 제한, 서비스 장애 시 동작은 API 구현 후 별도로 검증해야 합니다.
+## 주문 결제 약관
+
+BUYER GET /api/v1/orders/checkout-terms와 /api/v1/orders/checkout-terms/{version}을 Order Command로 전달합니다. 일반 주문 목록·상세 Query 경로는 추가하지 않습니다. 실제 ALB의 구매 대상 그룹 분기는 운영 배포 시 별도 적용합니다.
