@@ -77,6 +77,7 @@ public class SecurityConfig {
                                                 HttpMethod.POST,
                                                 "/api/v1/orders",
                                                 "/api/v1/orders/*/payment-attempts",
+                                                "/api/v1/orders/*/purchase-confirmation",
                                                 "/api/v1/orders/*/inquiries",
                                                 "/api/v1/orders/*/inquiries/*/messages",
                                                 "/api/v1/orders/*/inquiry-images",
