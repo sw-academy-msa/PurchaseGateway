@@ -108,6 +108,7 @@ class OrderRoutingIntegrationTest {
                 List.of(
                         "/api/v1/orders",
                         "/api/v1/orders/order-1/payment-attempts",
+                        "/api/v1/orders/order-1/purchase-confirmation",
                         "/api/v1/orders/order-1/inquiries",
                         "/api/v1/orders/order-1/inquiries/inquiry-1/messages",
                         "/api/v1/orders/order-1/inquiry-images",
