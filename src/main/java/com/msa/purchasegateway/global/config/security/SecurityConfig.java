@@ -60,6 +60,16 @@ public class SecurityConfig {
                                         .permitAll()
                                         .pathMatchers("/actuator/**")
                                         .denyAll()
+                                        // 광고는 SELLER의 지정 메서드만 허용하고 소유권은 Payment가 다시 검증합니다.
+                                        .pathMatchers(
+                                                HttpMethod.GET,
+                                                "/api/v1/payments/advertising/*",
+                                                "/api/v1/payments/advertising/*/checkout")
+                                        .hasRole("SELLER")
+                                        .pathMatchers(
+                                                HttpMethod.POST,
+                                                "/api/v1/payments/advertising/*/completion")
+                                        .hasRole("SELLER")
                                         // 상품 문의는 BUYER의 쓰기이며 상품 목록·상세 GET은 Query 경계에 남깁니다.
                                         .pathMatchers(
                                                 HttpMethod.POST, "/api/v1/products/*/inquiries")
