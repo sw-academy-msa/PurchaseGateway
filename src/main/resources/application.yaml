@@ -38,6 +38,9 @@ server:
   shutdown: graceful
   forward-headers-strategy: none
 gateway:
+  # 금융 drain이 끝날 때까지 유지하고 신규 접수 중단은 Product와 Payment에서 제어합니다.
+  advertising:
+    enabled: ${GATEWAY_ADVERTISING_ENABLED:false}
   auth:
     issuer: ${JWT_ISSUER:http://localhost:8080}
     audience: ${JWT_AUDIENCE:stockdrop-api}
